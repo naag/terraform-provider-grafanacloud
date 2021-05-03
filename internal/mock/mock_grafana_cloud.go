@@ -34,6 +34,28 @@ type errorResponse struct {
 	Message string `json:"message"`
 }
 
+func (g *GrafanaCloud) Start() *GrafanaCloud {
+	r := chi.NewRouter()
+	// r.Use(middleware.Logger)
+	r.Route("/api/orgs/{org}", func(r chi.Router) {
+		r.Use(g.organisationCtx)
+		r.Post("/api-keys", g.createPortalAPIKey)
+		r.Get("/api-keys", g.listPortalAPIKeys)
+		r.Delete("/api-keys/{name}", g.deletePortalAPIKey)
+		r.Get("/instances", g.listStacks)
+	})
+	r.Post("/api/instances", g.createStack)
+	r.Delete("/api/instances/{stackSlug}", g.deleteStack)
+	r.Post("/api/instances/{stack}/api/auth/keys", g.createProxyGrafanaAPIKey)
+
+	// Grafana Cloud API doesn't really offer routes at /grafana. These are just provided
+	// here so that we can mock the Grafana API running inside Grafana Cloud stacks.
+	r.Get("/grafana/{stack}/api/auth/keys", g.listGrafanaAPIKeys)
+	r.Delete("/grafana/{stack}/api/auth/keys/{id}", g.deleteGrafanaAPIKey)
+	g.Server = httptest.NewServer(r)
+	return g
+}
+
 func NewGrafanaCloud() *GrafanaCloud {
 	return &GrafanaCloud{
 		Organisations: make(map[string]*organisation),
@@ -67,28 +89,6 @@ func (g *GrafanaCloud) WithStack(stackName, orgName string) *GrafanaCloud {
 	org.StackAPIKeys = map[string]*grafana.APIKeyList{
 		stackName: {},
 	}
-	return g
-}
-
-func (g *GrafanaCloud) Start() *GrafanaCloud {
-	r := chi.NewRouter()
-	// r.Use(middleware.Logger)
-	r.Route("/api/orgs/{org}", func(r chi.Router) {
-		r.Use(g.organisationCtx)
-		r.Post("/api-keys", g.createPortalAPIKey)
-		r.Get("/api-keys", g.listPortalAPIKeys)
-		r.Delete("/api-keys/{name}", g.deletePortalAPIKey)
-		r.Get("/instances", g.listStacks)
-	})
-	r.Post("/api/instances", g.createStack)
-	r.Delete("/api/instances/{stackSlug}", g.deleteStack)
-	r.Post("/api/instances/{stack}/api/auth/keys", g.createProxyGrafanaAPIKey)
-
-	// Grafana Cloud API doesn't really offer routes at /grafana. These are just provided
-	// here so that we can mock the Grafana API running inside Grafana Cloud stacks.
-	r.Get("/grafana/{stack}/api/auth/keys", g.listGrafanaAPIKeys)
-	r.Delete("/grafana/{stack}/api/auth/keys/{id}", g.deleteGrafanaAPIKey)
-	g.Server = httptest.NewServer(r)
 	return g
 }
 
@@ -143,15 +143,12 @@ func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
 	stack := &portal.Stack{}
 	fromJSON(stack, r)
 
-	url := fmt.Sprintf("%s/grafana/%s", g.Server.URL, stack.Slug)
-	stack = &portal.Stack{
-		ID:      g.GetNextID(),
-		OrgID:   g.GetNextID(),
-		OrgSlug: orgName,
-		OrgName: orgName,
-		Name:    stack.Name,
-		Slug:    stack.Slug,
-		URL:     url,
+	stack.ID = g.GetNextID()
+	stack.OrgID = g.GetNextID()
+	stack.OrgSlug = orgName
+	stack.OrgName = orgName
+	if stack.URL == "" {
+		stack.URL = fmt.Sprintf("%s/grafana/%s", g.Server.URL, stack.Slug)
 	}
 
 	org.StackList.Items = append(org.StackList.Items, stack)

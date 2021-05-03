@@ -32,6 +32,28 @@ func TestAccStack_Basic(t *testing.T) {
 	})
 }
 
+func TestAccStack_URL(t *testing.T) {
+	resourceName := acctest.RandStringFromCharSet(10, acctest.CharSetAlphaNum)
+	url := "https://my.grafana.instance"
+
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckStackDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccStackConfigURL(resourceName, url),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckStackExists("grafanacloud_stack.test"),
+					resource.TestCheckResourceAttrSet("grafanacloud_stack.test", "id"),
+					resource.TestCheckResourceAttr("grafanacloud_stack.test", "name", resourceName),
+					resource.TestCheckResourceAttr("grafanacloud_stack.test", "slug", resourceName+"-slug"),
+					resource.TestCheckResourceAttr("grafanacloud_stack.test", "url", url),
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckStackExists(resourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resourceName]
@@ -85,4 +107,14 @@ resource "grafanacloud_stack" "test" {
   slug = "%s-slug"
 }
 `, resourceName, resourceName)
+}
+
+func testAccStackConfigURL(resourceName, url string) string {
+	return fmt.Sprintf(`
+resource "grafanacloud_stack" "test" {
+  name = "%s"
+  slug = "%s-slug"
+	url  = "%s"
+}
+`, resourceName, resourceName, url)
 }
