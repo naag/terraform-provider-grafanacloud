@@ -79,7 +79,7 @@ func (g *GrafanaCloud) deleteStack(w http.ResponseWriter, r *http.Request) {
 	sendResponse(w, nil, http.StatusNoContent)
 }
 
-func (g *GrafanaCloud) createProxyGrafanaAPIKey(w http.ResponseWriter, r *http.Request) {
+func (g *GrafanaCloud) createGrafanaAPIKeyProxy(w http.ResponseWriter, r *http.Request) {
 	stackName := chi.URLParam(r, "stack")
 
 	apiKey := &grafana.APIKey{
