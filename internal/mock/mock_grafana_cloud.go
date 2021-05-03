@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/naag/terraform-provider-grafanacloud/internal/api/grafana"
 	"github.com/naag/terraform-provider-grafanacloud/internal/api/portal"
 )
@@ -37,6 +38,7 @@ type errorResponse struct {
 func (g *GrafanaCloud) Start() *GrafanaCloud {
 	r := chi.NewRouter()
 	// r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 	r.Route("/api/orgs/{org}", func(r chi.Router) {
 		r.Use(g.organisationCtx)
 		r.Post("/api-keys", g.createPortalAPIKey)
