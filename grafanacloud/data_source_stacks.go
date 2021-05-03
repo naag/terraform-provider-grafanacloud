@@ -34,7 +34,7 @@ func dataSourceStacks() *schema.Resource {
 
 func dataSourceStacksRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*GrafanaCloudProvider)
+	p := m.(*Provider)
 
 	stacks, err := listStacks(p)
 	if err != nil {
@@ -68,7 +68,7 @@ func stackListToSchema(stacks []*portal.Stack) []map[string]interface{} {
 	return result
 }
 
-func listStacks(p *GrafanaCloudProvider) ([]*portal.Stack, error) {
+func listStacks(p *Provider) ([]*portal.Stack, error) {
 	result := make([]*portal.Stack, 0)
 	resp, err := p.Client.ListStacks(p.Organisation)
 	if err != nil {
@@ -91,7 +91,7 @@ func listStacks(p *GrafanaCloudProvider) ([]*portal.Stack, error) {
 	return result, nil
 }
 
-func findAlertmanagerDatasource(p *GrafanaCloudProvider, stack *portal.Stack) (*portal.DataSource, error) {
+func findAlertmanagerDatasource(p *Provider, stack *portal.Stack) (*portal.DataSource, error) {
 	ds, err := p.Client.ListDataSources(stack.Slug)
 	if err != nil {
 		return nil, fmt.Errorf("error while locating Alertmanager instance for stack %s: %v", stack.Slug, err)

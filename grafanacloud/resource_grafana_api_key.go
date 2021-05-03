@@ -61,7 +61,7 @@ func ValidateGrafanaApiKeyRole() schema.SchemaValidateFunc {
 }
 
 func resourceApiKeyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	p := m.(*GrafanaCloudProvider)
+	p := m.(*Provider)
 
 	req := &grafana.CreateAPIKey{}
 	req.Name = d.Get("name").(string)
@@ -81,7 +81,7 @@ func resourceApiKeyCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 func resourceApiKeyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*GrafanaCloudProvider)
+	p := m.(*Provider)
 
 	stack := d.Get("stack").(string)
 	client, cleanup, err := p.Client.GetAuthedGrafanaClient(p.Organisation, stack)
@@ -117,7 +117,7 @@ func resourceApiKeyRead(ctx context.Context, d *schema.ResourceData, m interface
 
 func resourceApiKeyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*GrafanaCloudProvider)
+	p := m.(*Provider)
 
 	stack := d.Get("stack").(string)
 	client, cleanup, err := p.Client.GetAuthedGrafanaClient(p.Organisation, stack)

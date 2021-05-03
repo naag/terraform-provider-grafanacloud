@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 		defer grafanaCloudMock.Close()
 	}
 
-	testAccProvider = grafanacloud.Provider("0.0.1")()
+	testAccProvider = grafanacloud.NewProvider("0.0.1")()
 	testAccProviders = map[string]*schema.Provider{
 		"grafanacloud": testAccProvider,
 	}

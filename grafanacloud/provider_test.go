@@ -12,7 +12,7 @@ import (
 )
 
 func TestProvider(t *testing.T) {
-	if err := grafanacloud.Provider("dev")().InternalValidate(); err != nil {
+	if err := grafanacloud.NewProvider("dev")().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -44,10 +44,10 @@ func TestProviderConfigure(t *testing.T) {
 	provider, err := configureFunc(context.TODO(), resourceLocalData)
 	require.Nil(t, err)
 
-	_, ok := provider.(*grafanacloud.GrafanaCloudProvider)
+	_, ok := provider.(*grafanacloud.Provider)
 	require.True(t, ok)
 }
 
-func getProvider(p *schema.Provider) *grafanacloud.GrafanaCloudProvider {
-	return p.Meta().(*grafanacloud.GrafanaCloudProvider)
+func getProvider(p *schema.Provider) *grafanacloud.Provider {
+	return p.Meta().(*grafanacloud.Provider)
 }

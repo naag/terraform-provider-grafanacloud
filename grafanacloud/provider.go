@@ -18,13 +18,13 @@ const (
 	EnvAPIKey       = "GRAFANA_CLOUD_API_KEY"
 )
 
-type GrafanaCloudProvider struct {
+type Provider struct {
 	Client       *portal.Client
 	Organisation string
 	UserAgent    string
 }
 
-func Provider(version string) func() *schema.Provider {
+func NewProvider(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			ResourcesMap: map[string]*schema.Resource{
@@ -81,7 +81,7 @@ func ConfigureProvider(version string, p *schema.Provider) func(context.Context,
 			return nil, diag.FromErr(err)
 		}
 
-		return &GrafanaCloudProvider{
+		return &Provider{
 			Client:       c,
 			Organisation: org,
 			UserAgent:    userAgent,

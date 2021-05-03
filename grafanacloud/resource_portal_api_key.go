@@ -54,7 +54,7 @@ func ValidatePortalApiKeyRole() schema.SchemaValidateFunc {
 }
 
 func resourcePortalApiKeyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	p := m.(*GrafanaCloudProvider)
+	p := m.(*Provider)
 
 	req := &portal.CreateAPIKey{}
 	req.Name = d.Get("name").(string)
@@ -73,7 +73,7 @@ func resourcePortalApiKeyCreate(ctx context.Context, d *schema.ResourceData, m i
 
 func resourcePortalApiKeyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*GrafanaCloudProvider)
+	p := m.(*Provider)
 
 	resp, err := p.Client.ListAPIKeys(p.Organisation)
 	if err != nil {
@@ -99,7 +99,7 @@ func resourcePortalApiKeyRead(ctx context.Context, d *schema.ResourceData, m int
 
 func resourcePortalApiKeyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*GrafanaCloudProvider)
+	p := m.(*Provider)
 
 	err := p.Client.DeleteAPIKey(p.Organisation, d.Id())
 	if err != nil {

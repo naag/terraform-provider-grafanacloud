@@ -23,7 +23,7 @@ func main() {
 	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	opts := &plugin.ServeOpts{ProviderFunc: grafanacloud.Provider(version)}
+	opts := &plugin.ServeOpts{ProviderFunc: grafanacloud.NewProvider(version)}
 
 	if debugMode {
 		err := plugin.Debug(context.Background(), grafanacloud.Addr, opts)
