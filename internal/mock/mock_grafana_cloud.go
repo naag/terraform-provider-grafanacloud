@@ -71,27 +71,6 @@ func (g *GrafanaCloud) WithOrganisation(orgName string) *GrafanaCloud {
 	return g
 }
 
-func (g *GrafanaCloud) WithStack(stackName, orgName string) *GrafanaCloud {
-	org := g.Organisations[orgName]
-	url := fmt.Sprintf("%s/grafana/%s", g.Server.URL, stackName)
-
-	stack := &portal.Stack{
-		ID:      g.GetNextID(),
-		OrgID:   g.GetNextID(),
-		OrgSlug: orgName,
-		OrgName: orgName,
-		Name:    stackName,
-		Slug:    stackName,
-		URL:     url,
-	}
-
-	org.StackList.Items = append(org.StackList.Items, stack)
-	org.StackAPIKeys = map[string]*grafana.APIKeyList{
-		stackName: {},
-	}
-	return g
-}
-
 func (g *GrafanaCloud) Close() {
 	g.Server.Close()
 }

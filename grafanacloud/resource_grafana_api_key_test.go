@@ -2,7 +2,6 @@ package grafanacloud_test
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"testing"
 
@@ -136,13 +135,16 @@ func testAccCheckGrafanaAPIKeyDestroy(s *terraform.State) error {
 }
 
 func testAccGrafanaAPIKeyConfig(resourceName, role string) string {
-	stack := os.Getenv(EnvStack)
-
 	return fmt.Sprintf(`
 resource "grafanacloud_grafana_api_key" "test" {
   name = "%s"
   role = "%s"
-	stack = "%s"
+	stack = grafanacloud_stack.test.slug
 }
-`, resourceName, role, stack)
+
+resource "grafanacloud_stack" "test" {
+  name = "dummy-stack"
+	slug = "dummystack"
+}
+`, resourceName, role)
 }

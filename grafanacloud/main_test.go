@@ -17,8 +17,7 @@ var (
 )
 
 const (
-	EnvStack = "GRAFANA_CLOUD_STACK"
-	EnvMock  = "GRAFANA_CLOUD_MOCK"
+	EnvMock = "GRAFANA_CLOUD_MOCK"
 )
 
 func TestMain(m *testing.M) {
@@ -38,12 +37,10 @@ func TestMain(m *testing.M) {
 func startMock() {
 	if os.Getenv(EnvMock) == "1" {
 		orgName := os.Getenv(grafanacloud.EnvOrganisation)
-		stackName := os.Getenv(EnvStack)
 
 		grafanaCloudMock = mock.NewGrafanaCloud().
-			Start().
 			WithOrganisation(orgName).
-			WithStack(stackName, orgName)
+			Start()
 
 		os.Setenv(grafanacloud.EnvURL, fmt.Sprintf("%s/api", grafanaCloudMock.Server.URL))
 	}
