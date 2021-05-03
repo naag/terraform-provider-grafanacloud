@@ -11,7 +11,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/naag/terraform-provider-grafanacloud/internal/api/grafana"
 	"github.com/naag/terraform-provider-grafanacloud/internal/api/portal"
 )
@@ -83,6 +82,9 @@ func (g *GrafanaCloud) Start() *GrafanaCloud {
 	})
 	r.Post("/api/instances", g.createStack)
 	r.Post("/api/instances/{stack}/api/auth/keys", g.createProxyGrafanaAPIKey)
+
+	// Grafana Cloud API doesn't really offer routes at /grafana. These are just provided
+	// here so that we can mock the Grafana API running inside Grafana Cloud stacks.
 	r.Get("/grafana/{stack}/api/auth/keys", g.listGrafanaAPIKeys)
 	r.Delete("/grafana/{stack}/api/auth/keys/{id}", g.deleteGrafanaAPIKey)
 	g.Server = httptest.NewServer(r)

@@ -56,4 +56,20 @@ To compile the provider, run `make build install`. This will build the provider 
 
 To generate or update documentation, run `go generate`.
 
-In order to run the full suite of Unit tests, run `make test`.
+## Testing the provider
+
+Both unit tests (`make test`) and acceptance tests (`make testacc`).
+
+By default, the acceptance tests run against a mock implementation of the Grafana Cloud/Grafana APIs provided by the __internal/mock__ package. If you'd like to instead run acceptance tests against the real API endpoints, please run the following command with proper values for the placeholder variables:
+
+```sh
+GRAFANA_CLOUD_MOCK=0 \
+GRAFANA_CLOUD_ORGANISATION=my-org-slug \
+GRAFANA_CLOUD_STACK=my-stack-slug \
+GRAFANA_CLOUD_API_KEY=a-secret-admin-api-key \
+make testacc
+```
+
+Due to API rate limits, such a test run may not actually pass or might even impact your production API usage, so please be careful about that.
+
+You can obtain debugging output from the `go-resty` HTTP client by setting `HTTP_DEBUG=1` when running tests.

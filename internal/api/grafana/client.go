@@ -22,7 +22,7 @@ func NewClient(baseURL, apiKey string, opts ...ClientOpt) (*Client, error) {
 	}
 
 	resty := resty.New().
-		SetDebug(len(os.Getenv("DEBUG")) != 0).
+		SetDebug(len(os.Getenv("HTTP_DEBUG")) != 0).
 		SetAuthToken(apiKey).
 		SetHostURL(url).
 		SetTimeout(30 * time.Second)
