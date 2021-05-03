@@ -83,11 +83,7 @@ func (g *GrafanaCloud) createPortalAPIKey(w http.ResponseWriter, r *http.Request
 		ID:    g.GetNextID(),
 		Token: "very-secret",
 	}
-
-	if err := json.NewDecoder(r.Body).Decode(apiKey); err != nil {
-		sendError(w, err)
-		return
-	}
+	fromJSON(apiKey, r)
 
 	org.PortalAPIKeys.Items = append(org.PortalAPIKeys.Items, apiKey)
 	sendCreated(apiKey, w)
@@ -166,11 +162,7 @@ func (g *GrafanaCloud) createProxyGrafanaAPIKey(w http.ResponseWriter, r *http.R
 		ID:  g.GetNextID(),
 		Key: "very-secret",
 	}
-
-	if err := json.NewDecoder(r.Body).Decode(apiKey); err != nil {
-		sendError(w, err)
-		return
-	}
+	fromJSON(apiKey, r)
 
 	stackAPIKeys := org.StackAPIKeys[stackName]
 	stackAPIKeys.Keys = append(stackAPIKeys.Keys, apiKey)
