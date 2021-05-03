@@ -72,7 +72,7 @@ func (g *GrafanaCloud) WithStack(stackName, orgName string) *GrafanaCloud {
 
 func (g *GrafanaCloud) Start() *GrafanaCloud {
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	// r.Use(middleware.Logger)
 	r.Route("/api/orgs/{org}", func(r chi.Router) {
 		r.Use(g.organisationCtx)
 		r.Post("/api-keys", g.createPortalAPIKey)
