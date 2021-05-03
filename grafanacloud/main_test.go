@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 func startMock() {
 	if os.Getenv("GRAFANA_CLOUD_MOCK") == "1" {
 		orgName := os.Getenv(EnvOrganisation)
-		stackName := fmt.Sprintf("%s-stack", orgName)
+		stackName := os.Getenv("GRAFANA_CLOUD_STACK")
 
 		grafanaCloudMock = mock.NewGrafanaCloud().
 			Start().
