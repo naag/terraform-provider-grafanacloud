@@ -16,7 +16,7 @@ func (g *GrafanaCloud) createPortalAPIKey(w http.ResponseWriter, r *http.Request
 	}
 	fromJSON(apiKey, r)
 
-	g.organisation.portalAPIKeys.Items = append(g.organisation.portalAPIKeys.Items, apiKey)
+	g.organisation.portalAPIKeys.AddKey(apiKey)
 	sendResponse(w, apiKey, http.StatusCreated)
 }
 
@@ -25,17 +25,22 @@ func (g *GrafanaCloud) listPortalAPIKeys(w http.ResponseWriter, r *http.Request)
 }
 
 func (g *GrafanaCloud) deletePortalAPIKey(w http.ResponseWriter, r *http.Request) {
-	keyName := chi.URLParam(r, "name")
-
-	newItems := make([]*portal.APIKey, 0)
-	for _, k := range g.organisation.portalAPIKeys.Items {
-		if k.Name != keyName {
-			newItems = append(newItems, k)
-		}
-	}
-
-	g.organisation.portalAPIKeys.Items = newItems
+	name := chi.URLParam(r, "name")
+	g.organisation.portalAPIKeys.DeleteByName(name)
 	sendResponse(w, nil, http.StatusNoContent)
+}
+
+func (g *GrafanaCloud) createGrafanaAPIKeyProxy(w http.ResponseWriter, r *http.Request) {
+	stackName := chi.URLParam(r, "stack")
+
+	apiKey := &grafana.APIKey{
+		ID:  g.GetNextID(),
+		Key: "very-secret",
+	}
+	fromJSON(apiKey, r)
+
+	g.organisation.stackAPIKeys[stackName].AddKey(apiKey)
+	sendResponse(w, apiKey, http.StatusCreated)
 }
 
 func (g *GrafanaCloud) listStacks(w http.ResponseWriter, r *http.Request) {
@@ -58,37 +63,14 @@ func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
 		stack.URL = fmt.Sprintf("%s/grafana/%s", g.URL(), stack.Slug)
 	}
 
-	g.organisation.stackList.Items = append(g.organisation.stackList.Items, stack)
+	g.organisation.stackList.AddStack(stack)
 	g.organisation.stackAPIKeys[stack.Slug] = &grafana.APIKeyList{}
-
 	sendResponse(w, stack, http.StatusCreated)
 }
 
 func (g *GrafanaCloud) deleteStack(w http.ResponseWriter, r *http.Request) {
 	stackSlug := chi.URLParam(r, "stack")
-
-	newItems := make([]*portal.Stack, 0)
-	for _, s := range g.organisation.stackList.Items {
-		if s.Slug != stackSlug {
-			newItems = append(newItems, s)
-		}
-	}
-
-	g.organisation.stackList.Items = newItems
+	g.organisation.stackList.DeleteBySlug(stackSlug)
 	delete(g.organisation.stackAPIKeys, stackSlug)
 	sendResponse(w, nil, http.StatusNoContent)
-}
-
-func (g *GrafanaCloud) createGrafanaAPIKeyProxy(w http.ResponseWriter, r *http.Request) {
-	stackName := chi.URLParam(r, "stack")
-
-	apiKey := &grafana.APIKey{
-		ID:  g.GetNextID(),
-		Key: "very-secret",
-	}
-	fromJSON(apiKey, r)
-
-	stackAPIKeys := g.organisation.stackAPIKeys[stackName]
-	stackAPIKeys.Keys = append(stackAPIKeys.Keys, apiKey)
-	sendResponse(w, apiKey, http.StatusCreated)
 }

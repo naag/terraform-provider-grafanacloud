@@ -68,6 +68,10 @@ func (k *APIKey) IsExpired() (bool, error) {
 	return now.After(expires), nil
 }
 
+func (l *APIKeyList) AddKey(k *APIKey) {
+	l.Keys = append(l.Keys, k)
+}
+
 func (l *APIKeyList) FindByID(id int) *APIKey {
 	for _, k := range l.Keys {
 		if k.ID == id {
@@ -76,4 +80,16 @@ func (l *APIKeyList) FindByID(id int) *APIKey {
 	}
 
 	return nil
+}
+
+func (l *APIKeyList) DeleteByID(id int) {
+	newKeys := make([]*APIKey, 0)
+
+	for _, k := range l.Keys {
+		if k.ID != id {
+			newKeys = append(newKeys, k)
+		}
+	}
+
+	l.Keys = newKeys
 }

@@ -81,6 +81,10 @@ func (c *Client) DeleteStack(stackSlug string) error {
 	return nil
 }
 
+func (l *StackList) AddStack(s *Stack) {
+	l.Items = append(l.Items, s)
+}
+
 func (l *StackList) FindBySlug(slug string) *Stack {
 	for _, stack := range l.Items {
 		if stack.Slug == slug {
@@ -89,4 +93,16 @@ func (l *StackList) FindBySlug(slug string) *Stack {
 	}
 
 	return nil
+}
+
+func (l *StackList) DeleteBySlug(slug string) {
+	newItems := make([]*Stack, 0)
+
+	for _, stack := range l.Items {
+		if stack.Slug != slug {
+			newItems = append(newItems, stack)
+		}
+	}
+
+	l.Items = newItems
 }

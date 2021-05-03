@@ -82,6 +82,10 @@ func (c *Client) DeleteAPIKey(org string, keyName string) error {
 	return nil
 }
 
+func (l *APIKeyList) AddKey(k *APIKey) {
+	l.Items = append(l.Items, k)
+}
+
 func (l *APIKeyList) FindByName(name string) *APIKey {
 	for _, k := range l.Items {
 		if k.Name == name {
@@ -90,4 +94,16 @@ func (l *APIKeyList) FindByName(name string) *APIKey {
 	}
 
 	return nil
+}
+
+func (l *APIKeyList) DeleteByName(name string) {
+	newKeys := make([]*APIKey, 0)
+
+	for _, k := range l.Items {
+		if k.Name != name {
+			newKeys = append(newKeys, k)
+		}
+	}
+
+	l.Items = newKeys
 }

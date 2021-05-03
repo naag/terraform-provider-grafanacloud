@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/naag/terraform-provider-grafanacloud/internal/api/grafana"
 )
 
 func (g *GrafanaCloud) listGrafanaAPIKeys(w http.ResponseWriter, r *http.Request) {
@@ -21,13 +20,6 @@ func (g *GrafanaCloud) deleteGrafanaAPIKey(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	newItems := make([]*grafana.APIKey, 0)
-	for _, k := range g.organisation.stackAPIKeys[stackName].Keys {
-		if k.ID != keyID {
-			newItems = append(newItems, k)
-		}
-	}
-
-	g.organisation.stackAPIKeys[stackName].Keys = newItems
+	g.organisation.stackAPIKeys[stackName].DeleteByID(keyID)
 	sendResponse(w, nil, http.StatusNoContent)
 }
