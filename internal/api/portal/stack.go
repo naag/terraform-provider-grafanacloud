@@ -26,6 +26,26 @@ type Stack struct {
 	AmInstanceURL        string
 }
 
+type CreateStack struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+	URL  string `json:"url"`
+}
+
+func (c *Client) CreateStack(r *CreateStack) (*Stack, error) {
+	url := "instances"
+	resp, err := c.client.R().
+		SetBody(r).
+		SetResult(&Stack{}).
+		Post(url)
+
+	if err := util.HandleError(err, resp, "Failed to create Grafana Cloud stack"); err != nil {
+		return nil, err
+	}
+
+	return resp.Result().(*Stack), nil
+}
+
 func (c *Client) ListStacks(org string) (*StackList, error) {
 	url := fmt.Sprintf("orgs/%s/instances", org)
 	resp, err := c.client.R().
@@ -47,6 +67,18 @@ func (c *Client) GetStack(org, stackSlug string) (*Stack, error) {
 
 	stack := stacks.FindBySlug(stackSlug)
 	return stack, nil
+}
+
+func (c *Client) DeleteStack(stackSlug string) error {
+	url := fmt.Sprintf("instances/%s", stackSlug)
+	resp, err := c.client.R().
+		Delete(url)
+
+	if err := util.HandleError(err, resp, "Failed to delete Grafana Cloud stack"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (l *StackList) FindBySlug(slug string) *Stack {

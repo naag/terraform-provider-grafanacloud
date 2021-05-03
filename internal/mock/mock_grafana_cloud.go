@@ -21,13 +21,13 @@ const EnvOrganisation = "GRAFANA_CLOUD_ORGANISATION"
 type GrafanaCloud struct {
 	Organisations map[string]*organisation
 	Server        *httptest.Server
+	nextID        int
 }
 
 type organisation struct {
 	StackList     *portal.StackList
 	PortalAPIKeys *portal.APIKeyList
 	StackAPIKeys  map[string]*grafana.APIKeyList
-	nextID        int
 }
 
 type errorResponse struct {
@@ -54,8 +54,8 @@ func (g *GrafanaCloud) WithStack(stackName, orgName string) *GrafanaCloud {
 	url := fmt.Sprintf("%s/grafana/%s", g.Server.URL, stackName)
 
 	stack := &portal.Stack{
-		ID:      org.GetNextID(),
-		OrgID:   org.GetNextID(),
+		ID:      g.GetNextID(),
+		OrgID:   g.GetNextID(),
 		OrgSlug: orgName,
 		OrgName: orgName,
 		Name:    stackName,
@@ -81,6 +81,7 @@ func (g *GrafanaCloud) Start() *GrafanaCloud {
 		r.Get("/instances", g.listStacks)
 	})
 	r.Post("/api/instances", g.createStack)
+	r.Delete("/api/instances/{stackSlug}", g.deleteStack)
 	r.Post("/api/instances/{stack}/api/auth/keys", g.createProxyGrafanaAPIKey)
 
 	// Grafana Cloud API doesn't really offer routes at /grafana. These are just provided
@@ -98,7 +99,7 @@ func (g *GrafanaCloud) Close() {
 func (g *GrafanaCloud) createPortalAPIKey(w http.ResponseWriter, r *http.Request) {
 	org := r.Context().Value("organisation").(*organisation)
 	apiKey := &portal.APIKey{
-		ID:    org.GetNextID(),
+		ID:    g.GetNextID(),
 		Token: "very-secret",
 	}
 
@@ -137,14 +138,45 @@ func (g *GrafanaCloud) listStacks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
-	org := r.Context().Value("organisation").(*organisation)
-	stack := &portal.Stack{
-		ID: org.GetNextID(),
+	orgName := os.Getenv(EnvOrganisation)
+	org := g.Organisations[orgName]
+	stack := &portal.Stack{}
+	fromJSON(stack, r)
+
+	url := fmt.Sprintf("%s/grafana/%s", g.Server.URL, stack.Slug)
+	stack = &portal.Stack{
+		ID:      g.GetNextID(),
+		OrgID:   g.GetNextID(),
+		OrgSlug: orgName,
+		OrgName: orgName,
+		Name:    stack.Name,
+		Slug:    stack.Slug,
+		URL:     url,
 	}
 
-	fromJSON(stack, r)
 	org.StackList.Items = append(org.StackList.Items, stack)
+	org.StackAPIKeys = map[string]*grafana.APIKeyList{
+		stack.Slug: {},
+	}
+
 	sendCreated(stack, w)
+}
+
+func (g *GrafanaCloud) deleteStack(w http.ResponseWriter, r *http.Request) {
+	orgName := os.Getenv(EnvOrganisation)
+	org := g.Organisations[orgName]
+	stackSlug := chi.URLParam(r, "stackSlug")
+
+	newItems := make([]*portal.Stack, 0)
+	for _, s := range org.StackList.Items {
+		if s.Slug != stackSlug {
+			newItems = append(newItems, s)
+		}
+	}
+
+	org.StackList.Items = newItems
+	delete(org.StackAPIKeys, stackSlug)
+	sendDeleted(w)
 }
 
 func (g *GrafanaCloud) createProxyGrafanaAPIKey(w http.ResponseWriter, r *http.Request) {
@@ -153,7 +185,7 @@ func (g *GrafanaCloud) createProxyGrafanaAPIKey(w http.ResponseWriter, r *http.R
 	stackName := chi.URLParam(r, "stack")
 
 	apiKey := &grafana.APIKey{
-		ID:  org.GetNextID(),
+		ID:  g.GetNextID(),
 		Key: "very-secret",
 	}
 
@@ -266,7 +298,7 @@ func sendError(w http.ResponseWriter, err error) {
 	}
 }
 
-func (o *organisation) GetNextID() int {
-	o.nextID += 1
-	return o.nextID
+func (g *GrafanaCloud) GetNextID() int {
+	g.nextID += 1
+	return g.nextID
 }

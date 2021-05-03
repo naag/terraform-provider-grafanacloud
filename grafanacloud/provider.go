@@ -28,6 +28,7 @@ func NewProvider(version string) func() *schema.Provider {
 	return func() *schema.Provider {
 		p := &schema.Provider{
 			ResourcesMap: map[string]*schema.Resource{
+				"grafanacloud_stack":           resourceStack(),
 				"grafanacloud_grafana_api_key": resourceGrafanaApiKey(),
 				"grafanacloud_portal_api_key":  resourcePortalApiKey(),
 			},
