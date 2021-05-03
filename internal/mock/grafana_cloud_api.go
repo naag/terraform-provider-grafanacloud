@@ -55,7 +55,7 @@ func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
 	stack.OrgSlug = g.organisation.name
 	stack.OrgName = g.organisation.name
 	if stack.URL == "" {
-		stack.URL = fmt.Sprintf("%s/grafana/%s", g.Server.URL, stack.Slug)
+		stack.URL = fmt.Sprintf("%s/grafana/%s", g.URL(), stack.Slug)
 	}
 
 	g.organisation.stackList.Items = append(g.organisation.stackList.Items, stack)
@@ -65,7 +65,7 @@ func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *GrafanaCloud) deleteStack(w http.ResponseWriter, r *http.Request) {
-	stackSlug := chi.URLParam(r, "stackSlug")
+	stackSlug := chi.URLParam(r, "stack")
 
 	newItems := make([]*portal.Stack, 0)
 	for _, s := range g.organisation.stackList.Items {

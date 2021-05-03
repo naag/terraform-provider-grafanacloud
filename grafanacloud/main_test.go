@@ -1,7 +1,6 @@
 package grafanacloud_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -40,6 +39,6 @@ func startMock() {
 		grafanaCloudMock = mock.NewGrafanaCloud(org).
 			Start()
 
-		os.Setenv(grafanacloud.EnvURL, fmt.Sprintf("%s/api", grafanaCloudMock.Server.URL))
+		os.Setenv(grafanacloud.EnvURL, grafanaCloudMock.URL())
 	}
 }

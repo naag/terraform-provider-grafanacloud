@@ -2,6 +2,7 @@ package mock
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -14,7 +15,7 @@ import (
 
 type GrafanaCloud struct {
 	organisation *organisation
-	Server       *httptest.Server
+	server       *httptest.Server
 	nextID       int
 }
 
@@ -32,23 +33,24 @@ type errorResponse struct {
 func (g *GrafanaCloud) Start() *GrafanaCloud {
 	r := chi.NewRouter()
 
-	// r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
+	r.Post("/api/instances", g.createStack)
+	r.Get("/api/orgs/{org}/instances", g.listStacks)
+	r.Delete("/api/instances/{stack}", g.deleteStack)
 
 	r.Post("/api/orgs/{org}/api-keys", g.createPortalAPIKey)
 	r.Get("/api/orgs/{org}/api-keys", g.listPortalAPIKeys)
 	r.Delete("/api/orgs/{org}/api-keys/{name}", g.deletePortalAPIKey)
-	r.Get("/api/orgs/{org}/instances", g.listStacks)
 
-	r.Post("/api/instances", g.createStack)
-	r.Delete("/api/instances/{stackSlug}", g.deleteStack)
-	r.Post("/api/instances/{stack}/api/auth/keys", g.createProxyGrafanaAPIKey)
+	r.Post("/api/instances/{stack}/api/auth/keys", g.createGrafanaAPIKeyProxy)
 
-	// Grafana Cloud API doesn't really offer routes at /grafana. These are just provided
+	// Grafana Cloud API doesn't really offer routes at /api/grafana. These are just provided
 	// here so that we can mock the Grafana API running inside Grafana Cloud stacks.
-	r.Get("/grafana/{stack}/api/auth/keys", g.listGrafanaAPIKeys)
-	r.Delete("/grafana/{stack}/api/auth/keys/{id}", g.deleteGrafanaAPIKey)
-	g.Server = httptest.NewServer(r)
+	r.Get("/api/grafana/{stack}/api/auth/keys", g.listGrafanaAPIKeys)
+	r.Delete("/api/grafana/{stack}/api/auth/keys/{id}", g.deleteGrafanaAPIKey)
+
+	g.server = httptest.NewServer(r)
 	return g
 }
 
@@ -56,15 +58,19 @@ func NewGrafanaCloud(org string) *GrafanaCloud {
 	return &GrafanaCloud{
 		organisation: &organisation{
 			name:          org,
+			stackList:     &portal.StackList{},
 			portalAPIKeys: &portal.APIKeyList{},
 			stackAPIKeys:  make(map[string]*grafana.APIKeyList),
-			stackList:     &portal.StackList{},
 		},
 	}
 }
 
 func (g *GrafanaCloud) Close() {
-	g.Server.Close()
+	g.server.Close()
+}
+
+func (g *GrafanaCloud) URL() string {
+	return fmt.Sprintf("%s/api", g.server.URL)
 }
 
 func fromJSON(d interface{}, r *http.Request) {
