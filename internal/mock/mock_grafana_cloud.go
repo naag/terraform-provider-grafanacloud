@@ -54,8 +54,8 @@ func (g *GrafanaCloud) WithStack(stackName, orgName string) *GrafanaCloud {
 	url := fmt.Sprintf("%s/grafana/%s", g.Server.URL, stackName)
 
 	stack := &portal.Stack{
-		ID:      1,
-		OrgID:   1,
+		ID:      org.GetNextID(),
+		OrgID:   org.GetNextID(),
 		OrgSlug: orgName,
 		OrgName: orgName,
 		Name:    stackName,
