@@ -1,9 +1,7 @@
 package mock
 
 import (
-	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -14,19 +12,17 @@ import (
 	"github.com/naag/terraform-provider-grafanacloud/internal/api/portal"
 )
 
-// TODO: remove me
-const EnvOrganisation = "GRAFANA_CLOUD_ORGANISATION"
-
 type GrafanaCloud struct {
-	Organisations map[string]*organisation
-	Server        *httptest.Server
-	nextID        int
+	organisation *organisation
+	Server       *httptest.Server
+	nextID       int
 }
 
 type organisation struct {
-	StackList     *portal.StackList
-	PortalAPIKeys *portal.APIKeyList
-	StackAPIKeys  map[string]*grafana.APIKeyList
+	name          string
+	stackList     *portal.StackList
+	portalAPIKeys *portal.APIKeyList
+	stackAPIKeys  map[string]*grafana.APIKeyList
 }
 
 type errorResponse struct {
@@ -35,15 +31,15 @@ type errorResponse struct {
 
 func (g *GrafanaCloud) Start() *GrafanaCloud {
 	r := chi.NewRouter()
+
 	// r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Route("/api/orgs/{org}", func(r chi.Router) {
-		r.Use(g.organisationCtx)
-		r.Post("/api-keys", g.createPortalAPIKey)
-		r.Get("/api-keys", g.listPortalAPIKeys)
-		r.Delete("/api-keys/{name}", g.deletePortalAPIKey)
-		r.Get("/instances", g.listStacks)
-	})
+
+	r.Post("/api/orgs/{org}/api-keys", g.createPortalAPIKey)
+	r.Get("/api/orgs/{org}/api-keys", g.listPortalAPIKeys)
+	r.Delete("/api/orgs/{org}/api-keys/{name}", g.deletePortalAPIKey)
+	r.Get("/api/orgs/{org}/instances", g.listStacks)
+
 	r.Post("/api/instances", g.createStack)
 	r.Delete("/api/instances/{stackSlug}", g.deleteStack)
 	r.Post("/api/instances/{stack}/api/auth/keys", g.createProxyGrafanaAPIKey)
@@ -56,19 +52,15 @@ func (g *GrafanaCloud) Start() *GrafanaCloud {
 	return g
 }
 
-func NewGrafanaCloud() *GrafanaCloud {
+func NewGrafanaCloud(org string) *GrafanaCloud {
 	return &GrafanaCloud{
-		Organisations: make(map[string]*organisation),
+		organisation: &organisation{
+			name:          org,
+			portalAPIKeys: &portal.APIKeyList{},
+			stackAPIKeys:  make(map[string]*grafana.APIKeyList),
+			stackList:     &portal.StackList{},
+		},
 	}
-}
-
-func (g *GrafanaCloud) WithOrganisation(orgName string) *GrafanaCloud {
-	g.Organisations[orgName] = &organisation{
-		StackList:     &portal.StackList{},
-		PortalAPIKeys: &portal.APIKeyList{},
-	}
-
-	return g
 }
 
 func (g *GrafanaCloud) Close() {
@@ -88,30 +80,6 @@ func fromJSON(d interface{}, r *http.Request) {
 	if err := json.Unmarshal(body, d); err != nil {
 		panic(err)
 	}
-}
-
-func (g *GrafanaCloud) organisationCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		orgName := chi.URLParam(r, "org")
-
-		org, err := g.findOrganisation(orgName)
-		if err != nil {
-			sendError(w, err)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "organisation", org)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func (g *GrafanaCloud) findOrganisation(org string) (*organisation, error) {
-	o, ok := g.Organisations[org]
-	if !ok {
-		return nil, fmt.Errorf("failed to find organisation `%s`", org)
-	}
-
-	return o, nil
 }
 
 func sendResponse(w http.ResponseWriter, v interface{}, status int) {

@@ -36,10 +36,8 @@ func TestMain(m *testing.M) {
 
 func startMock() {
 	if os.Getenv(EnvMock) == "1" {
-		orgName := os.Getenv(grafanacloud.EnvOrganisation)
-
-		grafanaCloudMock = mock.NewGrafanaCloud().
-			WithOrganisation(orgName).
+		org := os.Getenv(grafanacloud.EnvOrganisation)
+		grafanaCloudMock = mock.NewGrafanaCloud(org).
 			Start()
 
 		os.Setenv(grafanacloud.EnvURL, fmt.Sprintf("%s/api", grafanaCloudMock.Server.URL))

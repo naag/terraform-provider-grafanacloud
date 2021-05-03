@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/naag/terraform-provider-grafanacloud/grafanacloud"
-	"github.com/naag/terraform-provider-grafanacloud/internal/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,9 +17,6 @@ func TestProvider(t *testing.T) {
 }
 
 func TestProviderConfigure(t *testing.T) {
-	mock := mock.NewGrafanaCloud().Start()
-	defer mock.Close()
-
 	resourceSchema := map[string]*schema.Schema{
 		"url": {
 			Type: schema.TypeString,

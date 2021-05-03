@@ -3,7 +3,6 @@ package mock
 import (
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/naag/terraform-provider-grafanacloud/internal/api/grafana"
@@ -11,45 +10,39 @@ import (
 )
 
 func (g *GrafanaCloud) createPortalAPIKey(w http.ResponseWriter, r *http.Request) {
-	org := r.Context().Value("organisation").(*organisation)
 	apiKey := &portal.APIKey{
 		ID:    g.GetNextID(),
 		Token: "very-secret",
 	}
 	fromJSON(apiKey, r)
 
-	org.PortalAPIKeys.Items = append(org.PortalAPIKeys.Items, apiKey)
+	g.organisation.portalAPIKeys.Items = append(g.organisation.portalAPIKeys.Items, apiKey)
 	sendResponse(w, apiKey, http.StatusCreated)
 }
 
 func (g *GrafanaCloud) listPortalAPIKeys(w http.ResponseWriter, r *http.Request) {
-	org := r.Context().Value("organisation").(*organisation)
-	sendResponse(w, org.PortalAPIKeys, http.StatusOK)
+	sendResponse(w, g.organisation.portalAPIKeys, http.StatusOK)
 }
 
 func (g *GrafanaCloud) deletePortalAPIKey(w http.ResponseWriter, r *http.Request) {
-	org := r.Context().Value("organisation").(*organisation)
 	keyName := chi.URLParam(r, "name")
 
 	newItems := make([]*portal.APIKey, 0)
-	for _, k := range org.PortalAPIKeys.Items {
+	for _, k := range g.organisation.portalAPIKeys.Items {
 		if k.Name != keyName {
 			newItems = append(newItems, k)
 		}
 	}
 
-	org.PortalAPIKeys.Items = newItems
+	g.organisation.portalAPIKeys.Items = newItems
 	sendResponse(w, nil, http.StatusNoContent)
 }
 
 func (g *GrafanaCloud) listStacks(w http.ResponseWriter, r *http.Request) {
-	org := r.Context().Value("organisation").(*organisation)
-	sendResponse(w, org.StackList, http.StatusOK)
+	sendResponse(w, g.organisation.stackList, http.StatusOK)
 }
 
 func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
-	orgName := os.Getenv(EnvOrganisation)
-	org := g.Organisations[orgName]
 	stack := &portal.Stack{
 		HmInstancePromID:  g.GetNextID(),
 		HmInstancePromURL: "https://prometheus-instance",
@@ -59,40 +52,34 @@ func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
 
 	stack.ID = g.GetNextID()
 	stack.OrgID = g.GetNextID()
-	stack.OrgSlug = orgName
-	stack.OrgName = orgName
+	stack.OrgSlug = g.organisation.name
+	stack.OrgName = g.organisation.name
 	if stack.URL == "" {
 		stack.URL = fmt.Sprintf("%s/grafana/%s", g.Server.URL, stack.Slug)
 	}
 
-	org.StackList.Items = append(org.StackList.Items, stack)
-	org.StackAPIKeys = map[string]*grafana.APIKeyList{
-		stack.Slug: {},
-	}
+	g.organisation.stackList.Items = append(g.organisation.stackList.Items, stack)
+	g.organisation.stackAPIKeys[stack.Slug] = &grafana.APIKeyList{}
 
 	sendResponse(w, stack, http.StatusCreated)
 }
 
 func (g *GrafanaCloud) deleteStack(w http.ResponseWriter, r *http.Request) {
-	orgName := os.Getenv(EnvOrganisation)
-	org := g.Organisations[orgName]
 	stackSlug := chi.URLParam(r, "stackSlug")
 
 	newItems := make([]*portal.Stack, 0)
-	for _, s := range org.StackList.Items {
+	for _, s := range g.organisation.stackList.Items {
 		if s.Slug != stackSlug {
 			newItems = append(newItems, s)
 		}
 	}
 
-	org.StackList.Items = newItems
-	delete(org.StackAPIKeys, stackSlug)
+	g.organisation.stackList.Items = newItems
+	delete(g.organisation.stackAPIKeys, stackSlug)
 	sendResponse(w, nil, http.StatusNoContent)
 }
 
 func (g *GrafanaCloud) createProxyGrafanaAPIKey(w http.ResponseWriter, r *http.Request) {
-	orgName := os.Getenv(EnvOrganisation)
-	org := g.Organisations[orgName]
 	stackName := chi.URLParam(r, "stack")
 
 	apiKey := &grafana.APIKey{
@@ -101,7 +88,7 @@ func (g *GrafanaCloud) createProxyGrafanaAPIKey(w http.ResponseWriter, r *http.R
 	}
 	fromJSON(apiKey, r)
 
-	stackAPIKeys := org.StackAPIKeys[stackName]
+	stackAPIKeys := g.organisation.stackAPIKeys[stackName]
 	stackAPIKeys.Keys = append(stackAPIKeys.Keys, apiKey)
 	sendResponse(w, apiKey, http.StatusCreated)
 }
