@@ -37,7 +37,7 @@ func resourcePortalApiKey() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				Description:  fmt.Sprintf("Role of the API key. Might be one of %s. See https://grafana.com/docs/grafana-cloud/api/#create-api-key for details.", portalApiKeyRoles),
-				ValidateFunc: validatePortalApiKeyRole(),
+				ValidateFunc: ValidatePortalApiKeyRole(),
 			},
 			"key": {
 				Type:        schema.TypeString,
@@ -49,12 +49,12 @@ func resourcePortalApiKey() *schema.Resource {
 	}
 }
 
-func validatePortalApiKeyRole() schema.SchemaValidateFunc {
+func ValidatePortalApiKeyRole() schema.SchemaValidateFunc {
 	return validation.StringInSlice(portalApiKeyRoles, false)
 }
 
 func resourcePortalApiKeyCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	p := m.(*grafanaCloudProvider)
+	p := m.(*GrafanaCloudProvider)
 
 	req := &portal.CreateAPIKey{}
 	req.Name = d.Get("name").(string)
@@ -73,7 +73,7 @@ func resourcePortalApiKeyCreate(ctx context.Context, d *schema.ResourceData, m i
 
 func resourcePortalApiKeyRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*grafanaCloudProvider)
+	p := m.(*GrafanaCloudProvider)
 
 	resp, err := p.Client.ListAPIKeys(p.Organisation)
 	if err != nil {
@@ -99,7 +99,7 @@ func resourcePortalApiKeyRead(ctx context.Context, d *schema.ResourceData, m int
 
 func resourcePortalApiKeyDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*grafanaCloudProvider)
+	p := m.(*GrafanaCloudProvider)
 
 	err := p.Client.DeleteAPIKey(p.Organisation, d.Id())
 	if err != nil {

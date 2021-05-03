@@ -1,4 +1,4 @@
-package grafanacloud
+package grafanacloud_test
 
 import (
 	"context"
@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/naag/terraform-provider-grafanacloud/grafanacloud"
 	"github.com/naag/terraform-provider-grafanacloud/internal/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestProvider(t *testing.T) {
-	if err := Provider("dev")().InternalValidate(); err != nil {
+	if err := grafanacloud.Provider("dev")().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
@@ -33,20 +34,20 @@ func TestProviderConfigure(t *testing.T) {
 	}
 
 	resourceDataMap := map[string]interface{}{
-		"url":          os.Getenv(EnvURL),
-		"api_key":      os.Getenv(EnvAPIKey),
-		"organisation": os.Getenv(EnvOrganisation),
+		"url":          os.Getenv(grafanacloud.EnvURL),
+		"api_key":      os.Getenv(grafanacloud.EnvAPIKey),
+		"organisation": os.Getenv(grafanacloud.EnvOrganisation),
 	}
 	resourceLocalData := schema.TestResourceDataRaw(t, resourceSchema, resourceDataMap)
 
-	configureFunc := configureProvider("0.0.1", &schema.Provider{TerraformVersion: "0.15"})
+	configureFunc := grafanacloud.ConfigureProvider("0.0.1", &schema.Provider{TerraformVersion: "0.15"})
 	provider, err := configureFunc(context.TODO(), resourceLocalData)
 	require.Nil(t, err)
 
-	_, ok := provider.(*grafanaCloudProvider)
+	_, ok := provider.(*grafanacloud.GrafanaCloudProvider)
 	require.True(t, ok)
 }
 
-func getProvider(p *schema.Provider) *grafanaCloudProvider {
-	return p.Meta().(*grafanaCloudProvider)
+func getProvider(p *schema.Provider) *grafanacloud.GrafanaCloudProvider {
+	return p.Meta().(*grafanacloud.GrafanaCloudProvider)
 }

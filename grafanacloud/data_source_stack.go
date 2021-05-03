@@ -25,7 +25,7 @@ func dataSourceStack() *schema.Resource {
 }
 func dataSourceStackRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	p := m.(*grafanaCloudProvider)
+	p := m.(*GrafanaCloudProvider)
 	nameFilter := d.Get("name").(string)
 
 	stacks, err := listStacks(p)

@@ -1,4 +1,4 @@
-package grafanacloud
+package grafanacloud_test
 
 import (
 	"fmt"
@@ -9,11 +9,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/naag/terraform-provider-grafanacloud/grafanacloud"
 	"github.com/stretchr/testify/require"
 )
 
 func TestValidateGrafanaApiKeyRole(t *testing.T) {
-	fn := validateGrafanaApiKeyRole()
+	fn := grafanacloud.ValidateGrafanaApiKeyRole()
 
 	var tests = []struct {
 		role  string
@@ -135,7 +136,7 @@ func testAccCheckGrafanaAPIKeyDestroy(s *terraform.State) error {
 }
 
 func testAccGrafanaAPIKeyConfig(resourceName, role string) string {
-	stack := os.Getenv("GRAFANA_CLOUD_STACK")
+	stack := os.Getenv(EnvStack)
 
 	return fmt.Sprintf(`
 resource "grafanacloud_grafana_api_key" "test" {
