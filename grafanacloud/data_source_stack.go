@@ -6,16 +6,12 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/naag/terraform-provider-grafanacloud/internal/api/portal"
 )
 
 func dataSourceStack() *schema.Resource {
 	s := baseStackSchema()
-	s["name"] = &schema.Schema{
-		Type:        schema.TypeString,
-		Required:    true,
-		Description: "Name of the stack to read (as slug name).",
-	}
+	s["slug"].Required = true
+	s["slug"].Computed = false
 
 	return &schema.Resource{
 		Description: "Reads a single Grafana Cloud stack from the organisation by the given name.",
@@ -26,55 +22,43 @@ func dataSourceStack() *schema.Resource {
 func dataSourceStackRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	p := m.(*Provider)
-	nameFilter := d.Get("name").(string)
+	slug := d.Get("slug").(string)
 
-	stacks, err := listStacks(p)
+	stackList, err := listStacks(p)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	stacks = filterStacksByName(stacks, nameFilter)
-	if len(stacks) != 1 {
-		return diag.Errorf("Expected to find a single stack, found %d stacks. Please check the name attribute", len(stacks))
+	stack := stackList.FindBySlug(slug)
+	if stack == nil {
+		return diag.Errorf("Couldn't find stack with slug `%s`", slug)
 	}
 
-	d.SetId(fmt.Sprint(stacks[0].ID))
+	d.SetId(fmt.Sprint(stack.ID))
 
-	if err := d.Set("name", stacks[0].Name); err != nil {
+	if err := d.Set("name", stack.Name); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("slug", stacks[0].Slug); err != nil {
+	if err := d.Set("slug", stack.Slug); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("prometheus_url", stacks[0].HmInstancePromURL); err != nil {
+	if err := d.Set("prometheus_url", stack.HmInstancePromURL); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("prometheus_user_id", stacks[0].HmInstancePromID); err != nil {
+	if err := d.Set("prometheus_user_id", stack.HmInstancePromID); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("alertmanager_url", stacks[0].AmInstanceURL); err != nil {
+	if err := d.Set("alertmanager_url", stack.AmInstanceURL); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("alertmanager_user_id", stacks[0].AmInstanceID); err != nil {
+	if err := d.Set("alertmanager_user_id", stack.AmInstanceID); err != nil {
 		return diag.FromErr(err)
 	}
 
 	return diags
-}
-
-func filterStacksByName(stacks []*portal.Stack, nameFilter string) []*portal.Stack {
-	result := make([]*portal.Stack, 0)
-
-	for _, stack := range stacks {
-		if nameFilter == "" || stack.Slug == nameFilter {
-			result = append(result, stack)
-		}
-	}
-
-	return result
 }

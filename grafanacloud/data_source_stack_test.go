@@ -38,7 +38,7 @@ resource "grafanacloud_stack" "test" {
 }
 
 data "grafanacloud_stack" "test" {
-  name = grafanacloud_stack.test.slug
+  slug = grafanacloud_stack.test.slug
 }
 `, resourceName, resourceName)
 }

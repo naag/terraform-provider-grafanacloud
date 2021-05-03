@@ -15,7 +15,7 @@ func dataSourceStacks() *schema.Resource {
 	s["name"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
-		Description: "Name of the stack to read (as slug name).",
+		Description: "Name of the stack.",
 	}
 
 	return &schema.Resource{
@@ -52,10 +52,10 @@ func dataSourceStacksRead(ctx context.Context, d *schema.ResourceData, m interfa
 	return diags
 }
 
-func stackListToSchema(stacks []*portal.Stack) []map[string]interface{} {
+func stackListToSchema(stackList *portal.StackList) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0)
 
-	for _, stack := range stacks {
+	for _, stack := range stackList.Items {
 		result = append(result, map[string]interface{}{
 			"id":                   stack.ID,
 			"name":                 stack.Name,
@@ -70,13 +70,13 @@ func stackListToSchema(stacks []*portal.Stack) []map[string]interface{} {
 	return result
 }
 
-func listStacks(p *Provider) ([]*portal.Stack, error) {
-	result := make([]*portal.Stack, 0)
+func listStacks(p *Provider) (*portal.StackList, error) {
 	resp, err := p.Client.ListStacks(p.Organisation)
 	if err != nil {
 		return nil, err
 	}
 
+	newItems := make([]*portal.Stack, 0)
 	for _, stack := range resp.Items {
 		alertmanager, err := findAlertmanagerDatasource(p, stack)
 		if err != nil {
@@ -87,10 +87,11 @@ func listStacks(p *Provider) ([]*portal.Stack, error) {
 			stack.AmInstanceURL = alertmanager.URL
 		}
 
-		result = append(result, stack)
+		newItems = append(newItems, stack)
 	}
 
-	return result, nil
+	resp.Items = newItems
+	return resp, nil
 }
 
 func findAlertmanagerDatasource(p *Provider, stack *portal.Stack) (*portal.DataSource, error) {
@@ -113,12 +114,17 @@ func baseStackSchema() map[string]*schema.Schema {
 		"id": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "ID of the Stack.",
+			Description: "ID of the stack.",
+		},
+		"name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the stack.",
 		},
 		"slug": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Slug name of the Stack.",
+			Description: "Slug name of the stack.",
 		},
 		"prometheus_url": {
 			Type:        schema.TypeString,
