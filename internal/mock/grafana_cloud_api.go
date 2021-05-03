@@ -50,7 +50,11 @@ func (g *GrafanaCloud) listStacks(w http.ResponseWriter, r *http.Request) {
 func (g *GrafanaCloud) createStack(w http.ResponseWriter, r *http.Request) {
 	orgName := os.Getenv(EnvOrganisation)
 	org := g.Organisations[orgName]
-	stack := &portal.Stack{}
+	stack := &portal.Stack{
+		HmInstancePromID:  g.GetNextID(),
+		HmInstancePromURL: "https://prometheus-instance",
+		AmInstanceID:      g.GetNextID(),
+	}
 	fromJSON(stack, r)
 
 	stack.ID = g.GetNextID()

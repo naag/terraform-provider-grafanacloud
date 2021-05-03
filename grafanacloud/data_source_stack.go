@@ -44,6 +44,10 @@ func dataSourceStackRead(ctx context.Context, d *schema.ResourceData, m interfac
 		return diag.FromErr(err)
 	}
 
+	if err := d.Set("slug", stacks[0].Slug); err != nil {
+		return diag.FromErr(err)
+	}
+
 	if err := d.Set("prometheus_url", stacks[0].HmInstancePromURL); err != nil {
 		return diag.FromErr(err)
 	}

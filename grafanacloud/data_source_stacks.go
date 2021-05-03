@@ -3,6 +3,7 @@ package grafanacloud
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -58,6 +59,7 @@ func stackListToSchema(stacks []*portal.Stack) []map[string]interface{} {
 		result = append(result, map[string]interface{}{
 			"id":                   stack.ID,
 			"name":                 stack.Name,
+			"slug":                 stack.Slug,
 			"prometheus_url":       stack.HmInstancePromURL,
 			"prometheus_user_id":   stack.HmInstancePromID,
 			"alertmanager_url":     stack.AmInstanceURL,
@@ -78,7 +80,7 @@ func listStacks(p *Provider) ([]*portal.Stack, error) {
 	for _, stack := range resp.Items {
 		alertmanager, err := findAlertmanagerDatasource(p, stack)
 		if err != nil {
-			return nil, err
+			log.Printf("[WARN] couldn't infer Alertmanager URL from Grafana instance: %v", err)
 		}
 
 		if alertmanager != nil {
@@ -112,6 +114,11 @@ func baseStackSchema() map[string]*schema.Schema {
 			Type:        schema.TypeInt,
 			Computed:    true,
 			Description: "ID of the Stack.",
+		},
+		"slug": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Slug name of the Stack.",
 		},
 		"prometheus_url": {
 			Type:        schema.TypeString,
